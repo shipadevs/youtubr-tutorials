@@ -1,0 +1,45 @@
+-- made by @super123goed on roblox
+local PathfindingService = game:GetService("PathfindingService")
+local Players = game:GetService("Players")
+local npc = script.Parent
+local humanoid = npc:WaitForChild("Humanoid")
+local rootPart = npc:WaitForChild("HumanoidRootPart")
+local function getNearestPlayer()
+	local nearestPlayer = nil
+	local shortestDistance = math.huge
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			local dist = (player.Character.HumanoidRootPart.Position - rootPart.Position).Magnitude
+			if dist < shortestDistance then
+				shortestDistance = dist
+				nearestPlayer = player
+			end
+		end
+	end
+	return nearestPlayer
+end
+while task.wait(1) do
+	local player = getNearestPlayer()
+	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		local targetPos = player.Character.HumanoidRootPart.Position
+		local path = PathfindingService:CreatePath({
+			AgentRadius = 2, -- determines the npx's width: the smaller the number, the easier it is to fit through narrow space
+			AgentHeight = 5, -- determines the npc's height; too low means it won't fit under low ceilings.
+			AgentCanJump = true
+		})
+		path:ComputeAsync(rootPart.Position, targetPos)
+
+		if path.Status == Enum.PathStatus.Success then
+			for _, waypoint in ipairs(path:GetWaypoints()) do
+				if waypoint.Action == Enum.PathWaypointAction.Jump then
+					humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+				end
+				humanoid:MoveTo(waypoint.Position)
+				humanoid.MoveToFinished:Wait(1)
+			end
+		else
+			print("no path found.")
+		end
+	end
+end
