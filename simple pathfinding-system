@@ -4,6 +4,11 @@ local Players = game:GetService("Players")
 local npc = script.Parent
 local humanoid = npc:WaitForChild("Humanoid")
 local rootPart = npc:WaitForChild("HumanoidRootPart")
+
+-- movement settings
+humanoid.WalkSpeed = 14 -- how fast the npc moves. default player speed is 16
+humanoid.JumpPower = 50 -- how high the npc can jump. higher value = higher jump
+
 local function getNearestPlayer()
 	local nearestPlayer = nil
 	local shortestDistance = math.huge
@@ -19,14 +24,15 @@ local function getNearestPlayer()
 	end
 	return nearestPlayer
 end
-while task.wait(1) do
+
+while task.wait() do
 	local player = getNearestPlayer()
 	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 		local targetPos = player.Character.HumanoidRootPart.Position
 		local path = PathfindingService:CreatePath({
-			AgentRadius = 2, -- determines the npx's width: the smaller the number, the easier it is to fit through narrow space
-			AgentHeight = 5, -- determines the npc's height; too low means it won't fit under low ceilings.
-			AgentCanJump = true
+			AgentRadius = 2, -- determines the npc's widt.; smaller means it fits easier through narrow spaces
+			AgentHeight = 5, -- determines the npc's height; too low means it won't fit under low ceilings
+			AgentCanJump = true -- allows the npc to jump automatically if needed
 		})
 		path:ComputeAsync(rootPart.Position, targetPos)
 
@@ -43,3 +49,4 @@ while task.wait(1) do
 		end
 	end
 end
+
