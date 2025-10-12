@@ -5,8 +5,6 @@ local npc = script.Parent
 local humanoid = npc:WaitForChild("Humanoid")
 local rootPart = npc:WaitForChild("HumanoidRootPart")
 local animator = humanoid:WaitForChild("Animator")
-
--- Create and load animation
 local walkAnimation = Instance.new("Animation")
 walkAnimation.AnimationId = "rbxassetid://913376220" -- Default Roblox walk animation you can replace with your own
 
@@ -26,14 +24,11 @@ local function playWalkAnim()
 	if walkTrack and not walkTrack.IsPlaying then
 		humanoid:ChangeState(Enum.HumanoidStateType.Running)
 		walkTrack:Play()
-		print("Walk animation playing")
 	end
 end
-
 local function stopWalkAnim()
 	if walkTrack and walkTrack.IsPlaying then
 		walkTrack:Stop()
-		print("Walk animation stopped")
 	end
 end
 
@@ -83,6 +78,7 @@ while task.wait(0) do
 			stopWalkAnim()
 		else
 			warn("Pathfinding failed:", path.Status)
+			wait(2)
 			stopWalkAnim()
 		end
 	else
