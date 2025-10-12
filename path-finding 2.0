@@ -1,0 +1,91 @@
+local PathfindingService = game:GetService("PathfindingService")
+local Players = game:GetService("Players")
+
+local npc = script.Parent
+local humanoid = npc:WaitForChild("Humanoid")
+local rootPart = npc:WaitForChild("HumanoidRootPart")
+local animator = humanoid:WaitForChild("Animator")
+
+-- Create and load animation
+local walkAnimation = Instance.new("Animation")
+walkAnimation.AnimationId = "rbxassetid://913376220" -- Default Roblox walk animation you can replace with your own
+
+local walkTrack = nil
+
+-- Load animation with error handling
+local success, err = pcall(function()
+	walkTrack = animator:LoadAnimation(walkAnimation)
+	walkTrack.Looped = true
+end)
+
+if not success then
+	warn("Failed to load animation:", err)
+end
+
+local function playWalkAnim()
+	if walkTrack and not walkTrack.IsPlaying then
+		humanoid:ChangeState(Enum.HumanoidStateType.Running)
+		walkTrack:Play()
+		print("Walk animation playing")
+	end
+end
+
+local function stopWalkAnim()
+	if walkTrack and walkTrack.IsPlaying then
+		walkTrack:Stop()
+		print("Walk animation stopped")
+	end
+end
+
+local function getNearestPlayer()
+	local nearestPlayer
+	local shortestDistance = math.huge
+	
+	for _, player in ipairs(Players:GetPlayers()) do
+		local char = player.Character
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			local dist = (char.HumanoidRootPart.Position - rootPart.Position).Magnitude
+			if dist < shortestDistance then
+				shortestDistance = dist
+				nearestPlayer = player
+			end
+		end
+	end
+	
+	return nearestPlayer
+end
+
+-- Main loop
+while task.wait(0) do
+	local player = getNearestPlayer()
+	
+	if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		local path = PathfindingService:CreatePath({
+			AgentRadius = 2,
+			AgentHeight = 5,
+			AgentCanJump = true
+		})
+		
+		path:ComputeAsync(rootPart.Position, player.Character.HumanoidRootPart.Position)
+		
+		if path.Status == Enum.PathStatus.Success then
+			for _, waypoint in ipairs(path:GetWaypoints()) do
+				playWalkAnim()
+				
+				if waypoint.Action == Enum.PathWaypointAction.Jump then
+					humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+				end
+				
+				humanoid:MoveTo(waypoint.Position)
+				humanoid.MoveToFinished:Wait()
+				task.wait(0)
+			end
+			stopWalkAnim()
+		else
+			warn("Pathfinding failed:", path.Status)
+			stopWalkAnim()
+		end
+	else
+		stopWalkAnim()
+	end
+end
