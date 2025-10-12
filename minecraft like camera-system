@@ -1,0 +1,54 @@
+-- Camera Switch System by @super123goed
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
+
+local distance = 10 -- distance from third party camera
+local height = 5 -- hight of third party camera
+local frontDistance = 8 -- distance for front-view
+local cameraState = 1
+local function switchCamera()
+	cameraState = cameraState + 1
+	if cameraState > 3 then
+		cameraState = 1
+	end
+
+	if cameraState == 1 then
+		-- First Person
+		print("Camera Mode: First Person")
+		camera.CameraType = Enum.CameraType.Custom
+		player.CameraMode = Enum.CameraMode.LockFirstPerson
+
+	elseif cameraState == 2 then
+		-- Back View
+		print("Camera Mode: Back View")
+		camera.CameraType = Enum.CameraType.Custom
+		player.CameraMode = Enum.CameraMode.Classic
+		player.CameraMaxZoomDistance = distance
+		player.CameraMinZoomDistance = distance
+
+	elseif cameraState == 3 then
+		-- Front View
+		print("Camera Mode: Front View")
+		camera.CameraType = Enum.CameraType.Custom
+		player.CameraMode = Enum.CameraMode.Classic
+		player.CameraMaxZoomDistance = frontDistance
+		player.CameraMinZoomDistance = frontDistance
+		wait(0.1)
+		camera.CFrame = camera.CFrame * CFrame.Angles(0, math.pi, 0)
+	end
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.V then -- you can change this keybind to whatever you want
+		switchCamera()
+	end
+end)
+switchCamera()
