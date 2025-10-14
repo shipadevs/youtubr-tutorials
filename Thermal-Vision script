@@ -1,0 +1,127 @@
+-- made by @shibadevs on youtube
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local TS = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+local plr = Players.LocalPlayer
+local active = false
+local transitioning = false
+local highlights = {}
+local tracked = {}
+local cc = Instance.new("ColorCorrectionEffect", Lighting)
+cc.TintColor = Color3.fromRGB(255, 140, 0)
+cc.Contrast = 0.2
+cc.Saturation = -0.3
+cc.Enabled = false
+local bloom = Instance.new("BloomEffect", Lighting)
+bloom.Intensity = 0.5
+bloom.Size = 24
+bloom.Threshold = 0.8
+bloom.Enabled = false
+local function tween(obj, props)
+	return TS:Create(obj, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), props)
+end
+
+local function addHighlight(mdl)
+	if highlights[mdl] then return end
+	local h = Instance.new("Highlight", mdl)
+	h.FillColor = Color3.fromRGB(255, 50, 50)
+	h.OutlineColor = Color3.fromRGB(255, 100, 0)
+	h.FillTransparency = active and 0.5 or 1
+	h.OutlineTransparency = active and 0 or 1
+	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlights[mdl] = h
+	if active and not transitioning then
+		h.FillTransparency = 1
+		h.OutlineTransparency = 1
+		tween(h, {FillTransparency = 0.5, OutlineTransparency = 0}):Play()
+	end
+end
+
+local function scan()
+	for obj in pairs(tracked) do
+		if not obj or not obj.Parent then
+			tracked[obj] = nil
+			if highlights[obj] then highlights[obj]:Destroy() highlights[obj] = nil end
+		end
+	end
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= plr and p.Character then
+			local h = p.Character:FindFirstChildOfClass("Humanoid")
+			if h and h.Health > 0 then
+				addHighlight(p.Character)
+				tracked[p.Character] = true
+			end
+		end
+	end
+	for _, d in pairs(workspace:GetDescendants()) do
+		if d:IsA("Model") then
+			local h = d:FindFirstChildOfClass("Humanoid")
+			if h and h.Health > 0 and not Players:GetPlayerFromCharacter(d) then
+				addHighlight(d)
+				tracked[d] = true
+			end
+		end
+	end
+end
+
+local function toggle()
+	if transitioning then return end
+	transitioning = true
+	active = not active
+
+	if active then
+		cc.Enabled = true
+		bloom.Enabled = true
+		cc.TintColor = Color3.fromRGB(255, 255, 255)
+		cc.Contrast = 0
+		cc.Saturation = 0
+		bloom.Intensity = 0
+
+		local t1 = tween(cc, {TintColor = Color3.fromRGB(255, 140, 0), Contrast = 0.2, Saturation = -0.3})
+		local t2 = tween(bloom, {Intensity = 0.5})
+		t1:Play()
+		t2:Play()
+
+		scan()
+		for _, h in pairs(highlights) do
+			h.FillTransparency = 1
+			h.OutlineTransparency = 1
+			tween(h, {FillTransparency = 0.5, OutlineTransparency = 0}):Play()
+		end
+		t1.Completed:Wait()
+	else
+		local t1 = tween(cc, {TintColor = Color3.fromRGB(255, 255, 255), Contrast = 0, Saturation = 0})
+		local t2 = tween(bloom, {Intensity = 0})
+		t1:Play()
+		t2:Play()
+
+		for _, h in pairs(highlights) do
+			tween(h, {FillTransparency = 1, OutlineTransparency = 1}):Play()
+		end
+		t1.Completed:Wait()
+
+		cc.Enabled = false
+		bloom.Enabled = false
+		for m, h in pairs(highlights) do
+			h:Destroy()
+			highlights[m] = nil
+		end
+		tracked = {}
+	end
+	transitioning = false
+end
+
+UIS.InputBegan:Connect(function(i, gp)
+	if not gp and i.KeyCode == Enum.KeyCode.V then toggle() end -- you can just change the keybind over here
+end)
+
+RS.RenderStepped:Connect(function()
+	if active then scan() end
+end)
+
+plr.CharacterRemoving:Connect(function()
+	for _, h in pairs(highlights) do h:Destroy() end
+end)
