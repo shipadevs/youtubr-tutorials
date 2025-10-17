@@ -1,0 +1,23 @@
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		local head = character:WaitForChild("Head")
+		local billboard = Instance.new("BillboardGui")
+		billboard.Name = "NameTag"
+		billboard.Adornee = head
+		billboard.Size = UDim2.new(0, 200, 0, 50)
+		billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = character
+		local nameText = Instance.new("TextLabel")
+		nameText.Parent = billboard
+		nameText.Size = UDim2.new(1, 0, 1, 0)
+		nameText.BackgroundTransparency = 1
+		nameText.Text = player.DisplayName
+		nameText.TextColor3 = Color3.fromRGB(255, 255, 255)
+		nameText.TextStrokeTransparency = 0.5
+		nameText.TextScaled = true
+		nameText.Font = Enum.Font.GothamBold
+	end)
+end)
+
+
